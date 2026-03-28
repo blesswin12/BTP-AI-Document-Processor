@@ -1,0 +1,41 @@
+{
+  "name": "docai-backend",
+  "version": "1.0.0",
+  "description": "A simple CAP project.",
+  "dependencies": {
+    "@sap-cloud-sdk/http-client": "^4.5.1",
+    "@sap/cds": "^9.8.4",
+    "@sap/xssec": "^4",
+    "axios": "^1.13.6",
+    "express": "^4.22.1",
+    "form-data": "^4.0.5",
+    "multer": "^2.1.1"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^2",
+    "@sap/cds-dk": "^9",
+    "cds-plugin-ui5": "^0.13.0",
+    "mbt": "^1.2.29",
+    "rimraf": "^5.0.5"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "watch-frontend": "cds watch --open com.sap.docai.frontend/index.html?sap-ui-xx-viewCache=false --livereload false",
+    "undeploy": "cf undeploy docai-backend --delete-services --delete-service-keys --delete-service-brokers",
+    "build": "rimraf resources mta_archives && mbt build --mtar archive",
+    "deploy": "cf deploy mta_archives/archive.mtar --retries 1"
+  },
+  "private": true,
+  "cds": {
+    "requires": {
+      "[production]": {
+        "auth": "xsuaa"
+      },
+      "destinations": true,
+      "html5-repo": true
+    }
+  },
+  "workspaces": [
+    "app/*"
+  ]
+}

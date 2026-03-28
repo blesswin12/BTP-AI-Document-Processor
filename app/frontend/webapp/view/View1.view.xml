@@ -1,0 +1,408 @@
+<mvc:View controllerName="com.sap.docai.frontend.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:u="sap.ui.unified"
+    xmlns:f="sap.f"
+    xmlns:card="sap.f.cards"
+    xmlns="sap.m"
+    xmlns:l="sap.ui.layout"
+    xmlns:core="sap.ui.core"
+    displayBlock="true">
+
+    <f:DynamicPage id="dynamicPage" headerExpanded="true" toggleHeaderOnTitleClick="false" fitContent="true">
+
+        <!-- ═══ PAGE TITLE ═══ -->
+        <f:title>
+            <f:DynamicPageTitle id="_IDGenDynamicPageTitle">
+                <f:heading>
+                    <Title id="_IDGenTitle" text="Document AI Extractor" level="H2"/>
+                </f:heading>
+                <f:snappedHeading>
+                    <Title id="_IDGenTitle1" text="Document AI Extractor" level="H3"/>
+                </f:snappedHeading>
+
+                <f:expandedContent>
+                    <Text id="_IDGenText" text="SAP Document Information Extraction · BTP AI Services"/>
+                </f:expandedContent>
+                <f:actions>
+                    <ObjectStatus id="_IDGenObjectStatus"
+                        text="SAP DIEx"
+                        state="Success"
+                        icon="sap-icon://ai"
+                        inverted="true"/>
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <!-- ═══ PAGE HEADER ═══ -->
+        <f:header>
+            <f:DynamicPageHeader id="_IDGenDynamicPageHeader" pinnable="true">
+                <l:Grid id="_IDGenGrid" defaultSpan="L4 M6 S12" hSpacing="1">
+
+                    <GenericTile id="_IDGenGenericTile"
+                        header="Upload PDF"
+                        subheader="Drag and drop or browse"
+                        tileContent="">
+                        <tileContent>
+                            <TileContent id="_IDGenTileContent" footer="Max 10MB · PDF only">
+                                <content>
+                                    <NumericContent id="_IDGenNumericContent"
+                                        value="1"
+                                        indicator="None"
+                                        valueColor="Good"
+                                        icon="sap-icon://document-text"/>
+                                </content>
+                            </TileContent>
+                        </tileContent>
+                    </GenericTile>
+
+                    <GenericTile id="_IDGenGenericTile1"
+                        header="AI Extraction"
+                        subheader="SAP Document Intelligence">
+                        <tileContent>
+                            <TileContent id="_IDGenTileContent1" footer="Header fields · Line items">
+                                <content>
+                                    <NumericContent id="_IDGenNumericContent1"
+                                        value="99"
+                                        scale="%"
+                                        indicator="Up"
+                                        valueColor="Good"
+                                        icon="sap-icon://machine-learning"/>
+                                </content>
+                            </TileContent>
+                        </tileContent>
+                    </GenericTile>
+
+                    <GenericTile id="_IDGenGenericTile2"
+                        header="Structured Output"
+                        subheader="Ready for SAP systems">
+                        <tileContent>
+                            <TileContent id="_IDGenTileContent2" footer="JSON · Invoice · PO · Receipt">
+                                <content>
+                                    <NumericContent id="_IDGenNumericContent2"
+                                        value="100"
+                                        scale="%"
+                                        indicator="Up"
+                                        valueColor="Good"
+                                        icon="sap-icon://database"/>
+                                </content>
+                            </TileContent>
+                        </tileContent>
+                    </GenericTile>
+
+                </l:Grid>
+            </f:DynamicPageHeader>
+        </f:header>
+
+        <!-- ═══ PAGE CONTENT ═══ -->
+        <f:content>
+            <l:Grid id="_IDGenGrid1" defaultSpan="L5 M12 S12" hSpacing="1" width="100%" class="sapUiSmallMarginTop">
+
+                <!-- ─── LEFT: Upload Panel ─────────────────────────── -->
+                <Panel id="_IDGenPanel"
+                    headerText="Upload Document"
+                    expandable="false"
+                    class="sapUiResponsiveMargin"
+                    width="100%">
+
+                    <!-- FIX: explicit L5 span via layoutData -->
+                    <layoutData>
+                        <l:GridData id="_IDGenGridData1" span="L5 M12 S12"/>
+                    </layoutData>
+
+                    <headerToolbar>
+                        <Toolbar id="_IDGenToolbar">
+                            <core:Icon id="_IDGenIcon" src="sap-icon://upload-to-cloud" class="sapUiSmallMarginEnd"/>
+                            <Title id="_IDGenTitle2" text="Upload Document" level="H4"/>
+                            <ToolbarSpacer id="_IDGenToolbarSpacer"/>
+                            <ObjectStatus id="_IDGenObjectStatus1"
+                                text="{= ${appView>/isExtracting} ? 'Processing...' : 'Ready'}"
+                                state="{= ${appView>/isExtracting} ? 'Warning' : 'Success'}"/>
+                        </Toolbar>
+                    </headerToolbar>
+
+                    <content>
+                        <VBox id="_IDGenVBox" class="sapUiMediumMargin" width="auto">
+
+                            <!-- File Uploader -->
+                            <l:BlockLayout id="_IDGenBlockLayout" background="Light">
+                                <l:BlockLayoutRow id="_IDGenBlockLayoutRow">
+                                    <l:BlockLayoutCell id="_IDGenBlockLayoutCell">
+                                        <VBox id="_IDGenVBox1" alignItems="Center" class="sapUiLargeMarginBottom">
+                                            <core:Icon id="_IDGenIcon1"
+                                                src="sap-icon://document-text"
+                                                size="4rem"
+                                                color="var(--sapBrandColor)"
+                                                class="sapUiSmallMarginBottom"/>
+                                            <Title id="_IDGenTitle3"
+                                                text="Select a PDF Document"
+                                                level="H5"
+                                                class="sapUiTinyMarginBottom"/>
+                                            <Text id="_IDGenText1"
+                                                text="Invoice · Receipt · Purchase Order · Tax Invoice"
+                                                class="sapUiTinyMarginBottom"
+                                                textAlign="Center"/>
+                                            <u:FileUploader
+                                                id="pdfUploader"
+                                                name="file"
+                                                fileType="pdf"
+                                                tooltip="Upload your PDF document"
+                                                placeholder="Choose PDF file..."
+                                                width="100%"
+                                                class="sapUiSmallMarginTop"/>
+                                        </VBox>
+                                    </l:BlockLayoutCell>
+                                </l:BlockLayoutRow>
+                            </l:BlockLayout>
+
+                            <!-- Document Type -->
+                            <Label id="_IDGenLabel" text="Document Type" design="Bold" class="sapUiTinyMarginBottom"/>
+                            <Select id="docTypeSelect" width="100%" class="sapUiSmallMarginBottom">
+                                <items>
+                                    <core:Item id="_IDGenItem"  key="invoice"       text="📄  Invoice"/>
+                                    <core:Item id="_IDGenItem1" key="paymentAdvice" text="💳  Payment Advice"/>
+                                    <core:Item id="_IDGenItem2" key="purchaseOrder" text="🛒  Purchase Order"/>
+                                    <core:Item id="_IDGenItem3" key="bankStatement" text="🏦  Bank Statement"/>
+                                </items>
+                            </Select>
+
+                            <!-- Extract Button -->
+                            <Button
+                                id="btnExtract"
+                                text="⚡  Extract with AI"
+                                type="Emphasized"
+                                icon="sap-icon://machine-learning"
+                                width="100%"
+                                press=".onExtractData"
+                                busy="{appView>/isExtracting}"
+                                class="sapUiSmallMarginTop sapUiSmallMarginBottom"/>
+
+                            <!-- Status Message -->
+                            <VBox id="_IDGenVBox2" visible="{= !!${appView>/statusMessage}}">
+                                <MessageStrip id="_IDGenMessageStrip"
+                                    text="{appView>/statusMessage}"
+                                    type="{= ${appView>/isExtracting} ? 'Information' : (${appView>/isError} ? 'Error' : 'Success')}"
+                                    showIcon="true"
+                                    showCloseButton="false"
+                                    class="sapUiSmallMarginTop"/>
+                            </VBox>
+
+                        </VBox>
+                    </content>
+                </Panel>
+
+                <!-- ─── RIGHT: Results Panel ───────────────────────── -->
+                <!-- FIX: Removed the nested <l:Grid> wrapper that was causing the shrink.
+                          The Panel now sits directly in _IDGenGrid1 and gets its own
+                          L7 span through layoutData, giving Upload(L5) + Results(L7) = 12. -->
+                <Panel id="_IDGenPanel1"
+                    headerText="Extraction Results"
+                    expandable="false"
+                    class="sapUiResponsiveMargin"
+                    width="100%">
+
+                    <!-- FIX: explicit L7 span via layoutData -->
+                    <layoutData>
+                        <l:GridData id="_IDGenGridData2" span="L7 M12 S12"/>
+                    </layoutData>
+
+                    <headerToolbar>
+                        <Toolbar id="_IDGenToolbar1">
+                            <core:Icon id="_IDGenIcon2" src="sap-icon://detail-view" class="sapUiSmallMarginEnd"/>
+                            <Title id="_IDGenTitle4" text="Extraction Results" level="H4"/>
+                            <ToolbarSpacer id="_IDGenToolbarSpacer1"/>
+                            <Button id="_IDGenButton"
+                                text="Copy JSON"
+                                icon="sap-icon://copy"
+                                type="Transparent"
+                                press=".onCopyJson"
+                                visible="{= !!${appView>/extractedData}}"/>
+                            <Button id="_IDGenButton1"
+                                text="Clear"
+                                icon="sap-icon://delete"
+                                type="Transparent"
+                                press=".onClearResults"
+                                visible="{= !!${appView>/extractedData}}"/>
+                        </Toolbar>
+                    </headerToolbar>
+
+                    <content>
+
+                        <!-- Empty State -->
+                        <VBox id="_IDGenVBox3"
+                            visible="{= !${appView>/extractedData}}"
+                            alignItems="Center"
+                            justifyContent="Center"
+                            class="sapUiLargeMargin">
+                            <core:Icon id="_IDGenIcon3"
+                                src="sap-icon://search"
+                                size="5rem"
+                                color="var(--sapNeutralColor)"
+                                class="sapUiMediumMarginBottom"/>
+                            <Title id="_IDGenTitle5" text="No Results Yet" level="H4" class="sapUiTinyMarginBottom"/>
+                            <Text id="_IDGenText2"
+                                text="Upload a PDF document and click 'Extract with AI' to see structured data here."
+                                textAlign="Center"
+                                class="sapUiSmallMarginBottom"/>
+                            <ObjectStatus id="_IDGenObjectStatus2" text="Waiting for document..." state="None" icon="sap-icon://pending"/>
+                        </VBox>
+
+                        <!-- Results: Icon Tab Bar -->
+                        <IconTabBar
+                            id="resultsTabs"
+                            visible="{= !!${appView>/extractedData}}"
+                            class="sapUiSmallMargin">
+
+                            <items>
+                                <!-- Summary Tab -->
+                                <IconTabFilter id="_IDGenIconTabFilter"
+                                    text="Summary"
+                                    icon="sap-icon://activity-individual"
+                                    key="summary">
+                                    <content>
+                                        <VBox id="_IDGenVBox4" class="sapUiSmallMargin">
+                                            <ObjectHeader
+                                                id="docObjectHeader"
+                                                title="{appView>/docFileName}"
+                                                number="{appView>/docGrossAmount}"
+                                                numberUnit="{appView>/docCurrency}"
+                                                numberState="Success">
+                                                <attributes>
+                                                    <ObjectAttribute id="_IDGenObjectAttribute"  title="Document #" text="{appView>/docNumber}"/>
+                                                    <ObjectAttribute id="_IDGenObjectAttribute1" title="Date"       text="{appView>/docDate}"/>
+                                                    <ObjectAttribute id="_IDGenObjectAttribute2" title="Type"       text="{appView>/docType}"/>
+                                                    <ObjectAttribute id="_IDGenObjectAttribute3" title="Status"     text="{appView>/docStatus}"/>
+                                                    <ObjectAttribute id="_IDGenObjectAttribute4" title="Pages"      text="{appView>/docPages}"/>
+                                                    <ObjectAttribute id="_IDGenObjectAttribute5" title="Language"   text="{appView>/docLanguage}"/>
+                                                </attributes>
+                                                <statuses>
+                                                    <ObjectStatus id="_IDGenObjectStatus3" title="Sender"   text="{appView>/docSender}"    state="Information"/>
+                                                    <ObjectStatus id="_IDGenObjectStatus4" title="Receiver" text="{appView>/docReceiver}"  state="Information"/>
+                                                    <ObjectStatus id="_IDGenObjectStatus5" title="Net"      text="{appView>/docNetAmount}" state="Success"/>
+                                                    <ObjectStatus id="_IDGenObjectStatus6" title="Tax"      text="{appView>/docTaxAmount}" state="Warning"/>
+                                                </statuses>
+                                            </ObjectHeader>
+                                        </VBox>
+                                    </content>
+                                </IconTabFilter>
+
+                                <!-- Header Fields Tab -->
+                                <IconTabFilter id="_IDGenIconTabFilter1"
+                                    text="Header Fields"
+                                    icon="sap-icon://header"
+                                    key="headerFields"
+                                    count="{appView>/headerFieldCount}">
+                                    <content>
+                                        <Table
+                                            id="headerFieldsTable"
+                                            items="{appView>/headerFields}"
+                                            alternateRowColors="true"
+                                            growing="true"
+                                            growingThreshold="20"
+                                            class="sapUiSmallMargin">
+                                            <headerToolbar>
+                                                <Toolbar id="_IDGenToolbar2">
+                                                    <Title id="_IDGenTitle6" text="Extracted Header Fields" level="H5"/>
+                                                    <ToolbarSpacer id="_IDGenToolbarSpacer2"/>
+                                                    <SearchField id="_IDGenSearchField"
+                                                        width="200px"
+                                                        placeholder="Search fields..."
+                                                        liveChange=".onSearchFields"/>
+                                                </Toolbar>
+                                            </headerToolbar>
+                                            <columns>
+                                                <Column id="_IDGenColumn"  width="10rem"><Text id="_IDGenText3"  text="Field"/></Column>
+                                                <Column id="_IDGenColumn1" width="6rem" ><Text id="_IDGenText4"  text="Category"/></Column>
+                                                <Column id="_IDGenColumn2"              ><Text id="_IDGenText5"  text="Value"/></Column>
+                                                <Column id="_IDGenColumn3" width="7rem" hAlign="End"><Text id="_IDGenText6" text="Confidence"/></Column>
+                                            </columns>
+                                            <items>
+                                                <ColumnListItem id="_IDGenColumnListItem">
+                                                    <cells>
+                                                        <ObjectIdentifier id="_IDGenObjectIdentifier" title="{appView>label}"/>
+                                                        <ObjectStatus id="_IDGenObjectStatus7"
+                                                            text="{appView>category}"
+                                                            state="{= ${appView>category} === 'amounts' ? 'Success' : ${appView>category} === 'sender' ? 'Information' : ${appView>category} === 'receiver' ? 'Warning' : 'None'}"/>
+                                                        <Text id="_IDGenText7" text="{appView>value}" wrapping="false"/>
+                                                        <ObjectNumber id="_IDGenObjectNumber1"
+                                                            number="{appView>confidencePct}"
+                                                            unit="%"
+                                                            state="{= ${appView>confidence} >= 0.9 ? 'Success' : ${appView>confidence} >= 0.7 ? 'Warning' : 'Error'}"/>
+                                                    </cells>
+                                                </ColumnListItem>
+                                            </items>
+                                        </Table>
+                                    </content>
+                                </IconTabFilter>
+
+                                <!-- Line Items Tab -->
+                                <IconTabFilter id="_IDGenIconTabFilter2"
+                                    text="Line Items"
+                                    icon="sap-icon://list"
+                                    key="lineItems"
+                                    count="{appView>/lineItemCount}">
+                                    <content>
+                                        <Table
+                                            id="lineItemsTable"
+                                            items="{appView>/lineItems}"
+                                            alternateRowColors="true"
+                                            class="sapUiSmallMargin">
+                                            <headerToolbar>
+                                                <Toolbar id="_IDGenToolbar3">
+                                                    <Title id="_IDGenTitle7" text="Line Items" level="H5"/>
+                                                </Toolbar>
+                                            </headerToolbar>
+                                            <columns>
+                                                <Column id="_IDGenColumn4" width="3rem"              ><Text id="_IDGenText8"  text="#"/></Column>
+                                                <Column id="_IDGenColumn5"                           ><Text id="_IDGenText9"  text="Description"/></Column>
+                                                <Column id="_IDGenColumn6" width="5rem"  hAlign="End"><Text id="_IDGenText10" text="Qty"/></Column>
+                                                <Column id="_IDGenColumn7" width="8rem"  hAlign="End"><Text id="_IDGenText11" text="Unit Price"/></Column>
+                                                <Column id="_IDGenColumn8" width="8rem"  hAlign="End"><Text id="_IDGenText12" text="Net Amount"/></Column>
+                                                <Column id="_IDGenColumn9" width="8rem"  hAlign="End"><Text id="_IDGenText13" text="Tax"/></Column>
+                                            </columns>
+                                            <items>
+                                                <ColumnListItem id="_IDGenColumnListItem1">
+                                                    <cells>
+                                                        <ObjectNumber    id="_IDGenObjectNumber2" number="{appView>index}"       emphasized="false"/>
+                                                        <ObjectIdentifier id="_IDGenObjectIdentifier1" title="{appView>description}"/>
+                                                        <Text            id="_IDGenText14"        text="{appView>quantity}"/>
+                                                        <ObjectNumber    id="_IDGenObjectNumber3" number="{appView>unitPrice}"   emphasized="false"/>
+                                                        <ObjectNumber    id="_IDGenObjectNumber4" number="{appView>netAmount}"   state="Success"/>
+                                                        <ObjectNumber    id="_IDGenObjectNumber5" number="{appView>taxAmount}"   state="Warning"/>
+                                                    </cells>
+                                                </ColumnListItem>
+                                            </items>
+                                        </Table>
+                                    </content>
+                                </IconTabFilter>
+
+                                <!-- Raw JSON Tab -->
+                                <IconTabFilter id="_IDGenIconTabFilter3"
+                                    text="Raw JSON"
+                                    icon="sap-icon://source-code"
+                                    key="rawJson">
+                                    <content>
+                                        <VBox id="_IDGenVBox5" class="sapUiSmallMargin">
+                                            <TextArea id="_IDGenTextArea"
+                                                value="{appView>/extractedData}"
+                                                width="100%"
+                                                rows="28"
+                                                editable="false"
+                                                growing="false"
+                                                class="sapUiTinyMarginTop"
+                                                valueLiveUpdate="false"/>
+                                        </VBox>
+                                    </content>
+                                </IconTabFilter>
+
+                            </items>
+                        </IconTabBar>
+
+                    </content>
+                </Panel>
+
+            </l:Grid>
+        </f:content>
+
+    </f:DynamicPage>
+
+</mvc:View>
