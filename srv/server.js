@@ -137,7 +137,8 @@ cds.on('bootstrap', (app) => {
         }
 
         // STEP 5: Return job result to frontend for polling
-        console.log('✅ STEP 5 OK — Sending job result to frontend.');
+        console.log('✅ 
+            STEP 5 OK — Sending job result to frontend.');
         return res.status(200).json(response.data);
     });
 
