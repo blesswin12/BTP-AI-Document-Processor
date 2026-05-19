@@ -58,7 +58,8 @@ sap.ui.define([
             formData.append("file", oFile);
 
             // Step 1: Upload and create job
-            fetch("/api/uploadDocument", { method: "POST", body: formData })
+            var sDocumentType = this.byId("docTypeSelect").getSelectedKey();
+            fetch("/api/uploadDocument?documentType=" + encodeURIComponent(sDocumentType), { method: "POST", body: formData })
             .then(res => {
                 if (!res.ok) return res.json().then(e => { throw new Error(JSON.stringify(e)); });
                 return res.json();

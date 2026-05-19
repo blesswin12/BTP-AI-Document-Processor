@@ -40,8 +40,7 @@
 
                     <GenericTile id="_IDGenGenericTile"
                         header="Upload PDF"
-                        subheader="Drag and drop or browse"
-                        tileContent="">
+                        subheader="Drag and drop or browse">
                         <tileContent>
                             <TileContent id="_IDGenTileContent" footer="Max 10MB · PDF only">
                                 <content>
@@ -131,7 +130,6 @@
                                             <core:Icon id="_IDGenIcon1"
                                                 src="sap-icon://document-text"
                                                 size="4rem"
-                                                color="var(--sapBrandColor)"
                                                 class="sapUiSmallMarginBottom"/>
                                             <Title id="_IDGenTitle3"
                                                 text="Select a PDF Document"
@@ -236,7 +234,6 @@
                             <core:Icon id="_IDGenIcon3"
                                 src="sap-icon://search"
                                 size="5rem"
-                                color="var(--sapNeutralColor)"
                                 class="sapUiMediumMarginBottom"/>
                             <Title id="_IDGenTitle5" text="No Results Yet" level="H4" class="sapUiTinyMarginBottom"/>
                             <Text id="_IDGenText2"

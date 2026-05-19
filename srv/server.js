@@ -38,9 +38,23 @@ if (process.env.VCAP_SERVICES) {
     console.log('✅ Local credentials loaded. DIEX_URL:', DIEX_URL);
 }
 
-console.log('   TOKEN_URL :', TOKEN_URL);
-console.log('   CLIENT_ID :', CLIENT_ID);
-console.log('   SECRET    :', CLIENT_SECRET ? '✅ present' : '❌ MISSING');
+console.log('   DIEx config:', isDocAIConfigured() ? 'configured' : 'missing or placeholder values');
+
+function isPlaceholder(value) {
+    const normalized = String(value || '').trim();
+    return !normalized || (normalized.startsWith('<') && normalized.endsWith('>'));
+}
+
+function isDocAIConfigured() {
+    return [DIEX_URL, TOKEN_URL, CLIENT_ID, CLIENT_SECRET].every(value => !isPlaceholder(value));
+}
+
+function rejectMissingDocAIConfig(res) {
+    return res.status(503).json({
+        error: 'Document AI credentials are not configured.',
+        details: 'Restore real values in ignored default-env.json for local runs, or bind the Document Information Extraction service in Cloud Foundry.'
+    });
+}
 
 // ─────────────────────────────────────────────────────────────
 // Document Type → DIEx Schema mapping
@@ -88,6 +102,10 @@ cds.on('bootstrap', (app) => {
 
     // ── POST /api/uploadDocument ─────────────────────────────
     app.post('/api/uploadDocument', upload.single('file'), async (req, res) => {
+
+        if (!isDocAIConfigured()) {
+            return rejectMissingDocAIConfig(res);
+        }
 
         // STEP 1: Validate file
         if (!req.file) {
@@ -175,6 +193,10 @@ cds.on('bootstrap', (app) => {
 
     // ── GET /api/getJobResult?jobId=xxx ──────────────────────
     app.get('/api/getJobResult', async (req, res) => {
+
+        if (!isDocAIConfigured()) {
+            return rejectMissingDocAIConfig(res);
+        }
         const jobId = req.query.jobId;
 
         if (!jobId) {
