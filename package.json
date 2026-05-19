@@ -22,7 +22,8 @@
     "watch-frontend": "cds watch --open com.sap.docai.frontend/index.html?sap-ui-xx-viewCache=false --livereload false",
     "undeploy": "cf undeploy docai-backend --delete-services --delete-service-keys --delete-service-brokers",
     "build": "rimraf resources mta_archives && mbt build --mtar archive",
-    "deploy": "cf deploy mta_archives/archive.mtar --retries 1"
+    "deploy": "cf deploy mta_archives/archive.mtar --retries 1",
+    "watch": "cds watch"
   },
   "private": true,
   "cds": {
