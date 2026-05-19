@@ -1,123 +1,162 @@
 _schema-version: 3.3.0
 ID: docai-backend
-description: A simple CAP project.
+description: DocAI Extractor - Intelligent Document Processing on SAP BTP
 version: 1.0.0
-modules:
-- name: docai-backend-srv
-  type: nodejs
-  path: gen/srv
-  requires:
-  - name: docai-backend-auth
-  - name: docai-backend-destination
-  provides:
-  - name: srv-api
-    properties:
-      srv-url: ${default-url}
-  parameters:
-    buildpack: nodejs_buildpack
-    instances: 1
-  build-parameters:
-    builder: npm-ci
-- name: docai-backend
-  type: approuter.nodejs
-  path: app/router
-  requires:
-  - name: srv-api
-    group: destinations
-    properties:
-      forwardAuthToken: true
-      name: srv-api
-      url: ~{srv-url}
-  - name: docai-backend-auth
-  - name: docai-backend-destination
-  - name: docai-backend-html5-runtime
-  provides:
-  - name: app-api
-    properties:
-      app-protocol: ${protocol}
-      app-uri: ${default-uri}
-  parameters:
-    disk-quota: 256M
-    keep-existing-routes: true
-    memory: 256M
-- name: docai-backend-app-deployer
-  type: com.sap.application.content
-  path: gen
-  requires:
-  - name: docai-backend-auth
-  - name: srv-api
-  - name: docai-backend-html5-repo-host
-    parameters:
-      config:
-        HTML5Runtime_enabled: true
-      content-target: true
-  build-parameters:
-    build-result: app/
-    requires:
-    - artifacts:
-      - comsapdocaifrontend.zip
-      name: comsapdocaifrontend
-      target-path: app/
-- name: comsapdocaifrontend
-  type: html5
-  path: app/frontend
-  build-parameters:
-    build-result: dist
-    builder: custom
-    commands:
-    - npm install
-    - npm run build:cf
-    supported-platforms: []
-resources:
-- name: docai-backend-auth
-  type: org.cloudfoundry.managed-service
-  parameters:
-    config:
-      oauth2-configuration:
-        credential-types:
-        - binding-secret
-        - x509
-        redirect-uris:
-        - https://*~{app-api/app-uri}/**
-      tenant-mode: dedicated
-      xsappname: docai-backend-${org}-${space}
-    path: ./xs-security.json
-    service: xsuaa
-    service-plan: application
-  requires:
-  - name: app-api
-- name: docai-backend-destination
-  type: org.cloudfoundry.managed-service
-  parameters:
-    config:
-      HTML5Runtime_enabled: false
-      init_data:
-        instance:
-          destinations:
-          - Authentication: NoAuthentication
-            Name: ui5
-            ProxyType: Internet
-            Type: HTTP
-            URL: https://ui5.sap.com
-          existing_destinations_policy: update
-    service: destination
-    service-plan: lite
-- name: docai-backend-html5-repo-host
-  type: org.cloudfoundry.managed-service
-  parameters:
-    service: html5-apps-repo
-    service-plan: app-host
-- name: docai-backend-html5-runtime
-  type: org.cloudfoundry.managed-service
-  parameters:
-    service: html5-apps-repo
-    service-plan: app-runtime
-parameters:
-  deploy_mode: html5-repo
-  enable-parallel-deployments: true
+
+# ─────────────────────────────────────────────────────────────
+# BUILD PARAMETERS
+# ─────────────────────────────────────────────────────────────
 build-parameters:
   before-all:
   - builder: custom
     commands:
     - npm ci
     - npx cds build --production
+
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+
+# ─────────────────────────────────────────────────────────────
+# MODULES
+# ─────────────────────────────────────────────────────────────
+modules:
+
+  # ── 1. CAP Backend (Node.js) ────────────────────────────────
+  - name: docai-backend-srv
+    type: nodejs
+    path: gen/srv
+    requires:
+      - name: docai-backend-auth
+      - name: docai-backend-destination
+      - name: docai-backend-diex
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+    parameters:
+      buildpack: nodejs_buildpack
+      instances: 1
+      memory: 512M
+      disk-quota: 512M
+    build-parameters:
+      builder: npm-ci
+
+  # ── 2. Approuter ────────────────────────────────────────────
+  - name: docai-backend
+    type: approuter.nodejs
+    path: app/router
+    requires:
+      - name: srv-api
+        group: destinations
+        properties:
+          forwardAuthToken: true
+          name: srv-api
+          url: ~{srv-url}
+      - name: docai-backend-auth
+      - name: docai-backend-destination
+      - name: docai-backend-html5-runtime
+    provides:
+      - name: app-api
+        properties:
+          app-protocol: ${protocol}
+          app-uri: ${default-uri}
+    parameters:
+      disk-quota: 256M
+      keep-existing-routes: true
+      memory: 256M
+
+  # ── 3. HTML5 App Deployer ───────────────────────────────────
+  - name: docai-backend-app-deployer
+    type: com.sap.application.content
+    path: gen
+    requires:
+      - name: docai-backend-auth
+      - name: srv-api
+      - name: docai-backend-html5-repo-host
+        parameters:
+          config:
+            HTML5Runtime_enabled: true
+          content-target: true
+    build-parameters:
+      build-result: app/
+      requires:
+        - artifacts:
+          - comsapdocaifrontend.zip
+          name: comsapdocaifrontend
+          target-path: app/
+
+  # ── 4. UI5 Frontend ─────────────────────────────────────────
+  - name: comsapdocaifrontend
+    type: html5
+    path: app/frontend
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+# ─────────────────────────────────────────────────────────────
+# RESOURCES (BTP Services)
+# ─────────────────────────────────────────────────────────────
+resources:
+
+  # ── XSUAA (Authentication) ──────────────────────────────────
+  - name: docai-backend-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        oauth2-configuration:
+          credential-types:
+            - binding-secret
+            - x509
+          redirect-uris:
+            - https://*~{app-api/app-uri}/**
+        tenant-mode: dedicated
+        xsappname: docai-backend-${org}-${space}
+      path: ./xs-security.json
+      service: xsuaa
+      service-plan: application
+    requires:
+      - name: app-api
+
+  # ── Destination Service ─────────────────────────────────────
+  - name: docai-backend-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: false
+        init_data:
+          instance:
+            destinations:
+              - Authentication: NoAuthentication
+                Name: ui5
+                ProxyType: Internet
+                Type: HTTP
+                URL: https://ui5.sap.com
+            existing_destinations_policy: update
+      service: destination
+      service-plan: lite
+
+  # ── HTML5 Repo Host ─────────────────────────────────────────
+  - name: docai-backend-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+
+  # ── HTML5 Runtime ───────────────────────────────────────────
+  - name: docai-backend-html5-runtime
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-runtime
+
+  # ── SAP Document Information Extraction ─────────────────────
+  # Your existing DIEx instance from cf services
+  - name: docai-backend-diex
+    type: org.cloudfoundry.existing-service
+    parameters:
+      service-name: DocAI_Trial

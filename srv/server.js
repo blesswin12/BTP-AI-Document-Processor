@@ -4,28 +4,56 @@ const FormData = require('form-data');
 const axios = require('axios');
 
 // ─────────────────────────────────────────────────────────────
-// DIEx Credentials — loaded from default-env.json
+// Credentials: local = default-env.json, CF = VCAP_SERVICES
 // ─────────────────────────────────────────────────────────────
-const destinations = require('../default-env.json').destinations;
-const dest = destinations.find(d => d.name === 'doc-ai-destination');
+let DIEX_URL, TOKEN_URL, CLIENT_ID, CLIENT_SECRET;
 
-if (!dest) {
-    throw new Error('❌ "doc-ai-destination" not found in default-env.json!');
+if (process.env.VCAP_SERVICES) {
+    console.log('🔧 Loading credentials from VCAP_SERVICES (CF)...');
+    const vcap = JSON.parse(process.env.VCAP_SERVICES);
+    const diexService = (
+        vcap['document-information-extraction-trial'] ||
+        vcap['document-information-extraction'] || []
+    )[0];
+
+    if (!diexService) throw new Error('❌ DIEx service not found in VCAP_SERVICES!');
+
+    const creds   = diexService.credentials;
+    DIEX_URL      = creds.url;
+    TOKEN_URL     = creds.uaa.url + '/oauth/token';
+    CLIENT_ID     = creds.uaa.clientid;
+    CLIENT_SECRET = creds.uaa.clientsecret;
+    console.log('✅ CF credentials loaded. DIEX_URL:', DIEX_URL);
+
+} else {
+    console.log('🔧 Loading credentials from default-env.json (local)...');
+    const destinations = require('../default-env.json').destinations;
+    const dest = destinations.find(d => d.name === 'doc-ai-destination');
+    if (!dest) throw new Error('❌ "doc-ai-destination" not found in default-env.json!');
+
+    DIEX_URL      = dest.url;
+    TOKEN_URL     = dest.tokenServiceUrl;
+    CLIENT_ID     = dest.clientId;
+    CLIENT_SECRET = dest.clientSecret;
+    console.log('✅ Local credentials loaded. DIEX_URL:', DIEX_URL);
 }
 
-const DIEX_URL      = dest.url;
-const TOKEN_URL     = dest.tokenServiceUrl;
-const CLIENT_ID     = dest.clientId;
-const CLIENT_SECRET = dest.clientSecret;
-
-console.log('🔧 DIEx config loaded:');
-console.log('   DIEX_URL  :', DIEX_URL);
 console.log('   TOKEN_URL :', TOKEN_URL);
 console.log('   CLIENT_ID :', CLIENT_ID);
 console.log('   SECRET    :', CLIENT_SECRET ? '✅ present' : '❌ MISSING');
 
 // ─────────────────────────────────────────────────────────────
-// Helper: fetch a fresh OAuth2 access token from UAA
+// Document Type → DIEx Schema mapping
+// ─────────────────────────────────────────────────────────────
+const SCHEMA_MAP = {
+    invoice:       'SAP_invoice_schema',
+    purchaseOrder: 'SAP_purchase_order_schema',
+    receipt:       'SAP_receipt_schema',
+    bankStatement: 'SAP_bank_statement_schema'
+};
+
+// ─────────────────────────────────────────────────────────────
+// Helper: fetch OAuth2 access token from UAA
 // ─────────────────────────────────────────────────────────────
 async function getAccessToken() {
     const response = await axios.post(
@@ -40,7 +68,7 @@ async function getAccessToken() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Multer: accept only PDFs, max 10 MB, stored in memory
+// Multer: PDFs only, max 10 MB, stored in memory
 // ─────────────────────────────────────────────────────────────
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -54,21 +82,25 @@ const upload = multer({
 });
 
 // ─────────────────────────────────────────────────────────────
-// CAP Bootstrap: register ALL custom Express routes here
+// CAP Bootstrap: register all custom Express routes
 // ─────────────────────────────────────────────────────────────
 cds.on('bootstrap', (app) => {
 
-    // ── POST /api/uploadDocument ─────────────────────────────────────
+    // ── POST /api/uploadDocument ─────────────────────────────
     app.post('/api/uploadDocument', upload.single('file'), async (req, res) => {
 
-        // STEP 1: Validate uploaded file
+        // STEP 1: Validate file
         if (!req.file) {
             console.warn('⚠️  No file in request.');
             return res.status(400).json({ error: 'No file uploaded. Please select a PDF.' });
         }
         console.log(`✅ STEP 1 OK — File: "${req.file.originalname}" | ${req.file.size} bytes | ${req.file.mimetype}`);
 
-        // STEP 2: Build multipart FormData for DIEx
+        const documentType = req.query.documentType || req.body.documentType || 'invoice';
+        const schemaName   = SCHEMA_MAP[documentType] || SCHEMA_MAP['invoice'];
+        console.log(`   Document type: ${documentType} | Schema: ${schemaName}`);
+
+        // STEP 2: Build FormData
         let formData;
         try {
             formData = new FormData();
@@ -79,8 +111,8 @@ cds.on('bootstrap', (app) => {
             });
             formData.append('options', JSON.stringify({
                 clientId:      'default',
-                schemaName:    'SAP_invoice_schema',
-                documentType:  'invoice',
+                schemaName:    schemaName,
+                documentType:  documentType,
                 extractAction: 'extraction'
             }));
             console.log('✅ STEP 2 OK — FormData ready.');
@@ -96,7 +128,7 @@ cds.on('bootstrap', (app) => {
             accessToken = await getAccessToken();
             console.log('✅ STEP 3 OK — Token acquired.');
         } catch (err) {
-            console.error('❌ STEP 3 FAILED — Token error:', err.message);
+            console.error('❌ STEP 3 FAILED:', err.message);
             if (err.response) {
                 console.error('   HTTP status:', err.response.status);
                 console.error('   HTTP body  :', JSON.stringify(err.response.data));
@@ -108,7 +140,7 @@ cds.on('bootstrap', (app) => {
             });
         }
 
-        // STEP 4: Call SAP DIEx API
+        // STEP 4: Call DIEx API
         let response;
         try {
             console.log('⏳ STEP 4 — Calling SAP DIEx API...');
@@ -124,7 +156,7 @@ cds.on('bootstrap', (app) => {
             );
             console.log(`✅ STEP 4 OK — DIEx status: ${response.status}`);
         } catch (err) {
-            console.error('❌ STEP 4 FAILED — DIEx API error:', err.message);
+            console.error('❌ STEP 4 FAILED:', err.message);
             if (err.response) {
                 console.error('   HTTP status:', err.response.status);
                 console.error('   HTTP body  :', JSON.stringify(err.response.data, null, 2));
@@ -136,13 +168,12 @@ cds.on('bootstrap', (app) => {
             });
         }
 
-        // STEP 5: Return job result to frontend for polling
-        console.log('✅ 
-            STEP 5 OK — Sending job result to frontend.');
+        // STEP 5: Return job ID to frontend
+        console.log('✅ STEP 5 OK — Sending result to frontend.');
         return res.status(200).json(response.data);
     });
 
-
+    // ── GET /api/getJobResult?jobId=xxx ──────────────────────
     app.get('/api/getJobResult', async (req, res) => {
         const jobId = req.query.jobId;
 
