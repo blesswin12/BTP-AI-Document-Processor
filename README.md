@@ -1,225 +1,182 @@
 # BTP-AI-Document-Processor
 
-An enterprise-grade intelligent document processing solution built with the SAP Cloud Application Programming Model (CAP) and SAPUI5 (Fiori). The application leverages SAP BTP Document Information Extraction (DIEx) AI services to automatically analyze unstructured PDF documents and transform them into structured, searchable, and business-ready data.
+An intelligent document processing application built on **SAP Business Technology Platform (BTP)** using the **SAP Cloud Application Programming Model (CAP)** and **SAPUI5**. The application integrates with **SAP Document Information Extraction (DIEx)** to automatically parse PDF business documents and surface structured, business-ready data — replacing manual document entry with AI-powered extraction.
 
-Organizations often spend significant time manually extracting information from invoices, purchase orders, bank statements, and payment advices. This application streamlines that process by using AI-powered document understanding capabilities provided by SAP BTP, reducing manual effort, improving accuracy, and accelerating document-driven business workflows.
+---
 
-## Business Value
+## Application Screenshots
 
-* Eliminate manual data entry from business documents.
-* Improve operational efficiency and processing speed.
-* Reduce human errors through AI-assisted extraction.
-* Enable quick access to structured financial and procurement data.
-* Maintain a complete audit trail of processed documents.
-* Easily integrate extracted data with SAP and non-SAP business applications.
+### Extraction Summary
+![Extraction Summary](images/extraction-summary.jpeg)
 
-## Key Features
+### Header Fields Extraction
+![Header Fields Extraction](images/header-fields-extraction.jpeg)
 
-### Intelligent Document Processing
+### Line Items Extraction
+![Line Items Extraction](images/line-items-extraction.jpeg)
 
-Upload PDF documents and automatically extract relevant business information using SAP BTP Document Information Extraction (DIEx) services.
+### Raw JSON Output
+![Raw JSON Output](images/raw-json-output.jpeg)
 
-### Multi-Document Type Support
+---
 
-The application supports multiple business document categories:
+## What Gets Extracted
 
-* Invoices
-* Purchase Orders
-* Payment Advices
-* Bank Statements
+Upload a PDF invoice, purchase order, receipt, or tax document and the application returns:
 
-Each document type is processed using the appropriate AI model to ensure accurate field recognition and extraction.
+### Header Fields (19 fields)
 
-### Secure SAP BTP Integration
+| Category | Fields Extracted |
+|---|---|
+| Financial | currencyCode, netAmount, taxAmount, taxRate, grossAmount, taxName, taxId |
+| Sender | senderName, senderStreet, senderHouseNumber, senderCity, senderAddress |
+| Receiver | receiverName, receiverCity, receiverState, receiverAddress |
+| Document | documentNumber, documentDate |
 
-* OAuth2 authentication using SAP BTP XSUAA/UAA services
-* Secure API communication with SAP AI services
-* Enterprise-ready architecture following SAP best practices
+Each field is returned with a **confidence score** (0–100%). Low-confidence fields are highlighted for manual review. Duplicate values are automatically removed and results are sorted by confidence.
 
-### Asynchronous Processing Workflow
+### Line Items
 
-Large documents are processed asynchronously:
+Tabular line data is extracted and displayed per row:
 
-1. Upload document
-2. Submit extraction request
-3. Poll processing status
-4. Retrieve AI-generated results
-5. Display structured output
+| Column | Example |
+|---|---|
+| Description | Laptop, Mouse, Keyboard, Software License, Support Charges |
+| Quantity | 1, 2, 1 |
+| Unit Price | — (if unavailable) |
+| Net Amount | 50000, 500, 1200, 20000 |
+| Tax | Per line where available |
 
-This approach ensures scalability and a responsive user experience.
+### Raw JSON
 
-### Smart Data Validation
+The full DIEx API response is exposed in a scrollable viewer with a one-click Copy JSON action — useful for downstream integration or debugging.
 
-The application automatically:
-
-* Removes duplicate field values
-* Retains high-confidence extraction results
-* Highlights low-confidence fields for manual verification
-* Sorts extracted information based on confidence scores
-
-### Line Item Extraction
-
-Supports extraction of repeating tabular data such as:
-
-* Product descriptions
-* Item quantities
-* Unit prices
-* Tax amounts
-* Net values
-* Total amounts
-
-Extracted line items are displayed in structured and user-friendly tables.
-
-### Advanced Search & Filtering
-
-Users can quickly locate extracted information through:
-
-* Real-time search
-* Dynamic filtering
-* Field-based lookup capabilities
-
-### Extraction History & Audit Trail
-
-Every document processing request is logged through OData V4 services.
-
-Stored information includes:
-
-* Document metadata
-* Extraction timestamps
-* AI response payloads
-* Processing status
-* Extracted business fields
-
-This provides complete traceability and auditing capabilities.
+---
 
 ## Architecture
 
-### Frontend
+```
+PDF Upload (SAPUI5)
+        |
+        v
+CAP Node.js Backend
+  - File upload (Multer)
+  - OAuth2 token fetch (XSUAA/UAA)
+  - DIEx API call
+        |
+        v
+SAP Document Information Extraction (DIEx)
+        |
+        v  [Async polling until status: DONE]
+Structured Extraction Response
+        |
+        v
+OData V4 Service  ──►  Extraction History & Audit Log
+        |
+        v
+SAPUI5 Results View
+  - Summary tab
+  - Header Fields tab (19 fields)
+  - Line Items tab
+  - Raw JSON tab
+```
 
-Built using SAPUI5 and SAP Fiori design principles.
+---
 
-* XML Views
-* MVC Architecture
-* JSON Models
-* SAP Horizon Theme
-* Responsive UI Design
+## Features
 
-### Backend
+- **Async processing with polling** — submission and result fetch are decoupled; the UI polls until the job status returns `DONE`
+- **Confidence-aware display** — per-field confidence scores shown; low-confidence fields flagged for review
+- **Extraction history** — every processed document is logged via OData V4 with metadata, timestamps, status, and AI response payload
+- **Multi-document type support** — Invoice, Receipt, Purchase Order, Tax Invoice
+- **Copy JSON** — raw DIEx response available for clipboard copy
+- **Search and filter** — real-time field lookup across extraction results
 
-Built using SAP CAP (Node.js).
-
-Responsibilities include:
-
-* File upload handling
-* Authentication management
-* DIEx API integration
-* Result transformation
-* OData service exposure
-* Persistence layer management
-
-### Database
-
-* SQLite for local development
-* SAP HANA Cloud for production environments
-
-### Deployment
-
-Designed for SAP BTP Cloud Foundry deployment using Multi-Target Applications (MTA).
+---
 
 ## Technology Stack
 
-### Frontend
+| Layer | Technology |
+|---|---|
+| Frontend | SAPUI5, SAP Fiori (XML Views, MVC, JSONModel, Horizon Theme) |
+| Backend | SAP CAP Node.js, Express.js, Axios, Multer |
+| AI Service | SAP Document Information Extraction (DIEx) |
+| Authentication | OAuth2 (Client Credentials via XSUAA/UAA) |
+| Database | SQLite (local), SAP HANA Cloud (production) |
+| Platform | SAP Business Technology Platform (BTP) |
+| Deployment | Cloud Foundry, MTA |
 
-* SAPUI5
-* SAP Fiori
-* XML Views
-* JSONModel
+---
 
-### Backend
+## Project Structure
 
-* SAP CAP (Node.js)
-* Express.js
-* Axios
-* Multer
+```
+.
+├── app/                        # SAPUI5 frontend
+├── db/
+│   └── docai-schema.cds        # CDS data model
+├── srv/                        # CAP service handlers
+├── images/                     # Application screenshots
+├── mta.yaml                    # MTA deployment descriptor
+├── xs-security.json            # XSUAA configuration
+├── env.example.json            # Environment variable template
+└── .env1                       # Local environment config
+```
 
-### AI Services
-
-* SAP BTP Document Information Extraction (DIEx)
-
-### Database
-
-* SQLite
-* SAP HANA Cloud
-
-### Platform
-
-* SAP Business Technology Platform (BTP)
-* Cloud Foundry
-* MTA Deployment
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-* Node.js
-* SAP CAP CLI
-* SAP BTP Account
-* Document Information Extraction Service Instance
+- Node.js
+- SAP CAP CLI (`npm install -g @sap/cds-dk`)
+- SAP BTP Account with Document Information Extraction service instance
 
-### Installation
-
-Clone the repository:
+### Setup
 
 ```bash
 git clone <repository-url>
 cd BTP-AI-Document-Processor
-```
-
-Install dependencies:
-
-```bash
 npm install
-```
-
-Configure environment variables:
-
-```bash
 cp env.example.json default-env.json
 ```
 
-Update `default-env.json` with your SAP BTP DIEx service credentials.
-
-Start the application:
+Update `default-env.json` with your SAP BTP DIEx service credentials, then:
 
 ```bash
 cds watch
 ```
 
-Open the application:
+Open at `http://localhost:4004`
 
-```text
-http://localhost:4004
-```
+---
 
-## Future Enhancements
+## Key Concepts Explored
 
-* Custom document template training
-* OCR support for scanned documents
-* Multi-language document processing
-* SAP S/4HANA integration
-* Workflow approvals using SAP Build Process Automation
-* Export extracted data to Excel and PDF
-* AI-assisted validation and correction suggestions
+- **SAP DIEx Integration** — Connecting to SAP Document Information Extraction via REST API with OAuth2 client credentials flow
+- **Asynchronous Processing** — Polling mechanism to track extraction job status before fetching results
+- **Confidence Score Handling** — Filtering, deduplicating, and sorting AI-extracted fields by confidence
+- **CAP OData V4** — Persisting and exposing extraction history as an auditable OData service
+- **Custom SAPUI5 UI** — Split-panel upload and results viewer with tabbed output (Summary / Header Fields / Line Items / Raw JSON)
 
-## Use Cases
+---
 
-* Accounts Payable Automation
-* Invoice Processing
-* Procurement Document Analysis
-* Financial Statement Digitization
-* Vendor Document Management
-* Banking and Payment Reconciliation
+## Roadmap
 
-## License
+- [x] PDF upload and DIEx extraction
+- [x] Header fields extraction (19 fields) with confidence scores
+- [x] Line item extraction
+- [x] Raw JSON viewer with copy action
+- [x] Extraction history via OData V4
+- [ ] OCR support for scanned documents
+- [ ] SAP S/4HANA integration for extracted invoice posting
+- [ ] SAP Build Process Automation for approval workflows
+- [ ] Multi-language document support
+- [ ] Export to Excel / PDF
 
-This project is intended for learning, experimentation, and enterprise integration scenarios on SAP Business Technology Platform (BTP).
+---
+
+## Learning Outcomes
+
+This project provided hands-on experience integrating SAP BTP AI services into a full-stack CAP application — covering OAuth2 authentication, asynchronous API patterns, confidence-aware data handling, and OData-backed audit logging — demonstrating how enterprise document automation can be built end-to-end on the SAP BTP ecosystem.
